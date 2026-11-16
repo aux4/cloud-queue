@@ -1,5 +1,26 @@
 # Release Notes
 
+## 0.2.5
+
+- Removed the shell-scripted name validation (`if(env==) && echo ... && exit 1 || true`,
+  `echo ... | grep -q -- '--'; echo $?`) from every `queue:cloud` operation
+  (`create`, `delete`, `list`, `send`, `lease`, `renew`, `ack`, `nack`, `dlq`). Validation of
+  `--env`/`--scope`/`--name` and the `<env>--<scope>--<name>` name build now happen in one step,
+  via a small Node helper (`lib/name.mjs`, no dependencies) invoked as `set:cloudName=!node
+  ${packageDir}/lib/name.mjs values(env, scope, name) <checkLength>`. Error messages and exit
+  behavior are unchanged, except that validation errors (missing `--env`/`--scope`, a `--`
+  anywhere in env/scope/name, or a resulting name over 80 characters) now go to stderr instead of
+  stdout — the existing tests were updated to check `error:partial` instead of `expect:partial`
+  for those cases. `node` is now a declared `system` dependency alongside the AWS CLI. The
+  `aux4/queue-sqs` install-readiness check (`create`/`delete`/`send`/`lease`/`dlq`, skipped on
+  `renew`/`ack`/`nack`) is unchanged. Added a test confirming a `--name` containing shell
+  metacharacters (e.g. `a;touch /tmp/x`) is passed through as a literal value and never executed
+  as a command.
+- Considered caching the resolved queue URL across calls to avoid a lookup-by-name round trip on
+  every operation; **not done** — a cached URL would go stale after a `delete`/re-`create` cycle
+  and silently operate on (or fail against) the wrong queue, which is worse than the current
+  per-call lookup cost.
+
 ## 0.2.4
 
 - `renew`, `ack` and `nack` no longer run the `aux4/queue-sqs` install check before every call.

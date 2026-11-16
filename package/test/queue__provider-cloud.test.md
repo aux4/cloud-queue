@@ -86,9 +86,12 @@ aux4 queue list --provider cloud
 echo "exit=$?"
 ````
 
-````expect:partial
-Error: --env is required (or set AUX4_CLOUD_ENV) *?
+````expect
 exit=1
+````
+
+````error:partial
+Error: --env is required (or set AUX4_CLOUD_ENV) *?
 ````
 
 ### should require --scope (or AUX4_CLOUD_SCOPE)
@@ -104,9 +107,12 @@ aux4 queue list --provider cloud
 echo "exit=$?"
 ````
 
-````expect:partial
-Error: --scope is required (or set AUX4_CLOUD_SCOPE) *?
+````expect
 exit=1
+````
+
+````error:partial
+Error: --scope is required (or set AUX4_CLOUD_SCOPE) *?
 ````
 
 ### should reject an env/scope/name containing '--'
@@ -120,9 +126,12 @@ aux4 queue cloud create --name "bad--name" --env dev --scope cloudtest
 echo "exit=$?"
 ````
 
-````expect:partial
-Error: --env/--scope/--name must not contain '--' *?
+````expect
 exit=1
+````
+
+````error:partial
+Error: --env/--scope/--name must not contain '--' *?
 ````
 
 ### should reject a resulting queue name over 80 characters
@@ -136,9 +145,30 @@ aux4 queue cloud create --name thisisaveryveryverylongqueuenamethatshouldexceedt
 echo "exit=$?"
 ````
 
-````expect:partial
-Error: resulting queue name *? exceeds the 80-character AWS SQS queue-name limit *?
+````expect
 exit=1
+````
+
+````error:partial
+Error: resulting queue name *? exceeds the 80-character AWS SQS queue-name limit *?
+````
+
+### should never execute shell metacharacters in --env/--scope/--name
+
+````execute
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+export AWS_DEFAULT_REGION=elasticmq
+export AWS_ENDPOINT_URL=http://localhost:19781
+rm -f /tmp/cloud-queue-injection-marker
+aux4 queue cloud create --name "a;touch /tmp/cloud-queue-injection-marker" --env dev --scope cloudtest >/dev/null 2>&1
+echo "exit=$?"
+test -f /tmp/cloud-queue-injection-marker && echo "INJECTED" || echo "safe"
+````
+
+````expect:partial
+exit=*?
+safe
 ````
 
 ### should lease a sent message through the top-level --provider cloud dispatcher
