@@ -22,6 +22,11 @@
       "brew:awscli",
       "apt:awscli",
       "dnf:awscli"
+    ],
+    [
+      "test:node --version",
+      "brew:node",
+      "linux:nodejs"
     ]
   ],
   "profiles": [
@@ -86,16 +91,7 @@
         {
           "name": "create",
           "execute": [
-            "if(env==) && echo 'Error: --env is required (or set AUX4_CLOUD_ENV) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "if(scope==) && echo 'Error: --scope is required (or set AUX4_CLOUD_SCOPE) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "nout:echo value(env) value(scope) value(name) | grep -q -- '--'; echo $?",
-            "set:hasDoubleDash=${response}",
-            "if(hasDoubleDash==0) && echo \"Error: --env/--scope/--name must not contain '--' (reserved as the queue-name field separator)\" && exit 1 || true",
-            "set:cloudName=${env}--${scope}--${name}",
-            "set:dlqName=${env}--${scope}--${name}-dlq.fifo",
-            "nout:echo -n value(dlqName) | grep -qE '^.{81,}$'; echo $?",
-            "set:tooLong=${response}",
-            "if(tooLong==0) && echo 'Error: resulting queue name' value(cloudName) 'exceeds the 80-character AWS SQS queue-name limit (counting the -dlq.fifo suffix) -- shorten --env/--scope/--name' && exit 1 || true",
+            "set:cloudName=!node ${packageDir}/lib/name.mjs values(env, scope, name) true",
             "nout:aux4 queue sqs --help > /dev/null 2>&1; echo $?",
             "set:sqsOk=${response}",
             "if(sqsOk!=0) && echo 'Error: aux4/queue-sqs is not installed. aux4/cloud-queue delegates to it -- run: aux4 aux4 pkger install aux4/queue-sqs' >&2 && exit 1 || true",
@@ -138,12 +134,7 @@
         {
           "name": "delete",
           "execute": [
-            "if(env==) && echo 'Error: --env is required (or set AUX4_CLOUD_ENV) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "if(scope==) && echo 'Error: --scope is required (or set AUX4_CLOUD_SCOPE) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "nout:echo value(env) value(scope) value(name) | grep -q -- '--'; echo $?",
-            "set:hasDoubleDash=${response}",
-            "if(hasDoubleDash==0) && echo \"Error: --env/--scope/--name must not contain '--' (reserved as the queue-name field separator)\" && exit 1 || true",
-            "set:cloudName=${env}--${scope}--${name}",
+            "set:cloudName=!node ${packageDir}/lib/name.mjs values(env, scope, name) false",
             "nout:aux4 queue sqs --help > /dev/null 2>&1; echo $?",
             "set:sqsOk=${response}",
             "if(sqsOk!=0) && echo 'Error: aux4/queue-sqs is not installed. aux4/cloud-queue delegates to it -- run: aux4 aux4 pkger install aux4/queue-sqs' >&2 && exit 1 || true",
@@ -181,9 +172,7 @@
         {
           "name": "list",
           "execute": [
-            "if(env==) && echo 'Error: --env is required (or set AUX4_CLOUD_ENV) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "if(scope==) && echo 'Error: --scope is required (or set AUX4_CLOUD_SCOPE) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "set:prefix=${env}--${scope}--",
+            "set:prefix=!node ${packageDir}/lib/name.mjs values(env, scope) '' false",
             "AWS_DEFAULT_REGION=value(region) aws sqs list-queues --queue-name-prefix value(prefix) --output json"
           ],
           "private": true,
@@ -213,12 +202,7 @@
         {
           "name": "send",
           "execute": [
-            "if(env==) && echo 'Error: --env is required (or set AUX4_CLOUD_ENV) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "if(scope==) && echo 'Error: --scope is required (or set AUX4_CLOUD_SCOPE) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "nout:echo value(env) value(scope) value(name) | grep -q -- '--'; echo $?",
-            "set:hasDoubleDash=${response}",
-            "if(hasDoubleDash==0) && echo \"Error: --env/--scope/--name must not contain '--' (reserved as the queue-name field separator)\" && exit 1 || true",
-            "set:cloudName=${env}--${scope}--${name}",
+            "set:cloudName=!node ${packageDir}/lib/name.mjs values(env, scope, name) false",
             "nout:aux4 queue sqs --help > /dev/null 2>&1; echo $?",
             "set:sqsOk=${response}",
             "if(sqsOk!=0) && echo 'Error: aux4/queue-sqs is not installed. aux4/cloud-queue delegates to it -- run: aux4 aux4 pkger install aux4/queue-sqs' >&2 && exit 1 || true",
@@ -261,12 +245,7 @@
         {
           "name": "lease",
           "execute": [
-            "if(env==) && echo 'Error: --env is required (or set AUX4_CLOUD_ENV) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "if(scope==) && echo 'Error: --scope is required (or set AUX4_CLOUD_SCOPE) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "nout:echo value(env) value(scope) value(name) | grep -q -- '--'; echo $?",
-            "set:hasDoubleDash=${response}",
-            "if(hasDoubleDash==0) && echo \"Error: --env/--scope/--name must not contain '--' (reserved as the queue-name field separator)\" && exit 1 || true",
-            "set:cloudName=${env}--${scope}--${name}",
+            "set:cloudName=!node ${packageDir}/lib/name.mjs values(env, scope, name) false",
             "nout:aux4 queue sqs --help > /dev/null 2>&1; echo $?",
             "set:sqsOk=${response}",
             "if(sqsOk!=0) && echo 'Error: aux4/queue-sqs is not installed. aux4/cloud-queue delegates to it -- run: aux4 aux4 pkger install aux4/queue-sqs' >&2 && exit 1 || true",
@@ -309,12 +288,7 @@
         {
           "name": "renew",
           "execute": [
-            "if(env==) && echo 'Error: --env is required (or set AUX4_CLOUD_ENV) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "if(scope==) && echo 'Error: --scope is required (or set AUX4_CLOUD_SCOPE) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "nout:echo value(env) value(scope) value(name) | grep -q -- '--'; echo $?",
-            "set:hasDoubleDash=${response}",
-            "if(hasDoubleDash==0) && echo \"Error: --env/--scope/--name must not contain '--' (reserved as the queue-name field separator)\" && exit 1 || true",
-            "set:cloudName=${env}--${scope}--${name}",
+            "set:cloudName=!node ${packageDir}/lib/name.mjs values(env, scope, name) false",
             "AWS_DEFAULT_REGION=value(region) aux4 queue sqs renew --name value(cloudName) param(leaseId) param(id) param(visibility)"
           ],
           "private": true,
@@ -364,12 +338,7 @@
         {
           "name": "ack",
           "execute": [
-            "if(env==) && echo 'Error: --env is required (or set AUX4_CLOUD_ENV) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "if(scope==) && echo 'Error: --scope is required (or set AUX4_CLOUD_SCOPE) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "nout:echo value(env) value(scope) value(name) | grep -q -- '--'; echo $?",
-            "set:hasDoubleDash=${response}",
-            "if(hasDoubleDash==0) && echo \"Error: --env/--scope/--name must not contain '--' (reserved as the queue-name field separator)\" && exit 1 || true",
-            "set:cloudName=${env}--${scope}--${name}",
+            "set:cloudName=!node ${packageDir}/lib/name.mjs values(env, scope, name) false",
             "AWS_DEFAULT_REGION=value(region) aux4 queue sqs ack --name value(cloudName) param(leaseId) param(id)"
           ],
           "private": true,
@@ -414,12 +383,7 @@
         {
           "name": "nack",
           "execute": [
-            "if(env==) && echo 'Error: --env is required (or set AUX4_CLOUD_ENV) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "if(scope==) && echo 'Error: --scope is required (or set AUX4_CLOUD_SCOPE) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "nout:echo value(env) value(scope) value(name) | grep -q -- '--'; echo $?",
-            "set:hasDoubleDash=${response}",
-            "if(hasDoubleDash==0) && echo \"Error: --env/--scope/--name must not contain '--' (reserved as the queue-name field separator)\" && exit 1 || true",
-            "set:cloudName=${env}--${scope}--${name}",
+            "set:cloudName=!node ${packageDir}/lib/name.mjs values(env, scope, name) false",
             "AWS_DEFAULT_REGION=value(region) aux4 queue sqs nack --name value(cloudName) param(leaseId) param(id)"
           ],
           "private": true,
@@ -464,12 +428,7 @@
         {
           "name": "dlq",
           "execute": [
-            "if(env==) && echo 'Error: --env is required (or set AUX4_CLOUD_ENV) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "if(scope==) && echo 'Error: --scope is required (or set AUX4_CLOUD_SCOPE) -- aux4/cloud-queue names queues <env>--<scope>--<name>' && exit 1 || true",
-            "nout:echo value(env) value(scope) value(name) | grep -q -- '--'; echo $?",
-            "set:hasDoubleDash=${response}",
-            "if(hasDoubleDash==0) && echo \"Error: --env/--scope/--name must not contain '--' (reserved as the queue-name field separator)\" && exit 1 || true",
-            "set:cloudName=${env}--${scope}--${name}",
+            "set:cloudName=!node ${packageDir}/lib/name.mjs values(env, scope, name) false",
             "nout:aux4 queue sqs --help > /dev/null 2>&1; echo $?",
             "set:sqsOk=${response}",
             "if(sqsOk!=0) && echo 'Error: aux4/queue-sqs is not installed. aux4/cloud-queue delegates to it -- run: aux4 aux4 pkger install aux4/queue-sqs' >&2 && exit 1 || true",
